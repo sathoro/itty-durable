@@ -15,7 +15,8 @@ function shouldRetry(err, retries) {
   err = err + '';
   if (err.includes('Network connection lost.')) return true;
   if (err.includes('Cannot resolve Durable Object due to transient issue on remote node.')) return true;
-  if (err.includes('Object reset because its code was updated.')) return true;
+  if (err.includes('Durable Object reset because its code was updated.')) return true;
+  if (err.includes("The Durable Object's code has been updated, this version can no longer access storage.")) return true;
   return false;
 }
 
