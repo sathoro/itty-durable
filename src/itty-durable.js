@@ -146,7 +146,7 @@ export const createDurable = (options = {}) => {
         }
       }
 
-      response = await stubFetch(router, request, args, 0).catch(onError);
+      response = await stubFetch(this.state.router, request, args, 0).catch(onError);
 
       // if persistOnChange is true, we persist on every response
       if (autoPersist) {
