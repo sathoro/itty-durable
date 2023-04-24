@@ -2,7 +2,7 @@
   "name": "itty-durable",
   "description": "Simplified interface for Cloudflare Durable Objects",
   "version": "1.6.1",
-  "main": "./index.js",
+  "main": "./dist/index.js",
   "keywords": [
     "cloudflare",
     "workers",
