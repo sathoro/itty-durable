@@ -8,6 +8,17 @@ import {
 } from 'itty-router-extras'
 import { proxyDurable } from './proxy-durable'
 
+const maxRetries = 10;
+
+function shouldRetry(err, retries) {
+  if (retries > maxRetries) return false;
+  err = err + '';
+  if (err.includes('Network connection lost.')) return true;
+  if (err.includes('Cannot resolve Durable Object due to transient issue on remote node.')) return true;
+  if (err.includes('Object reset because its code was updated.')) return true;
+  return false;
+}
+
 // factory function for IttyDurable with custom options
 export const createDurable = (options = {}) => {
   const {
@@ -121,10 +132,21 @@ export const createDurable = (options = {}) => {
       // load initial state from storage (if found)
       await this.loadFromStorage()
 
-      // we pass off the request to the internal router
-      const response = await this.state.router
-                                      .handle(request, ...args)
-                                      .catch(onError)
+      const stubFetch = async (router, request, args, retries) => {
+        try {
+          // we pass off the request to the internal router
+          return router.handle(request, ...args);
+        } catch (err) {
+          if (!shouldRetry(err, retries)) return Promise.reject(err);
+          // Retry up to 11 times over 30 seconds with exponential backoff. 20ms, 40ms, etc
+
+          return new Promise(resolve => setTimeout(resolve, Math.pow(2, retries) * 10)).then(() => {
+            return stubFetch(router, request, args, retries + 1);
+          });
+        }
+      }
+
+      response = await stubFetch(router, request, args, 0);
 
       // if persistOnChange is true, we persist on every response
       if (autoPersist) {
