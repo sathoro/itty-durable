@@ -15,11 +15,11 @@
     "verify": "echo 'verifying module...' && yarn build && yarn test",
     "dev": "yarn lint && jest --verbose --watch src",
     "coveralls": "cat ./coverage/lcov.info | node node_modules/.bin/coveralls",
-    "prerelease": "yarn verify",
     "prebuild": "rimraf dist",
     "build-old": "terser-folder src -eo dist --pattern '**/*.js,!**/*spec.js' -x .js",
-    "build": "rm -fr dist/* && tsc -p tsconfig.json",
-    "release": "release --tag --push --src=dist"
+    "build": "tsc -p tsconfig.json",
+    "release": "release --tag --push --src=dist",
+    "prepare": "npm run build"
   },
   "repository": {
     "type": "git",
