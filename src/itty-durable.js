@@ -11,13 +11,7 @@ import { proxyDurable } from './proxy-durable'
 const maxRetries = 10;
 
 function shouldRetry(err, retries) {
-  if (retries > maxRetries) return false;
-  err = err + '';
-  if (err.includes('Network connection lost.')) return true;
-  if (err.includes('Cannot resolve Durable Object due to transient issue on remote node.')) return true;
-  if (err.includes('Durable Object reset because its code was updated.')) return true;
-  if (err.includes("The Durable Object's code has been updated, this version can no longer access storage.")) return true;
-  return false;
+  return retries <= maxRetries;
 }
 
 // factory function for IttyDurable with custom options
