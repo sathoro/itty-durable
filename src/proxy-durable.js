@@ -13,6 +13,27 @@ const transformResponse = response => {
   return response
 }
 
+const maxRetries = 10;
+
+function shouldRetry(err, retries) {
+  if (retries > maxRetries) return false;
+  err = err + '';
+  err = err.toLowerCase();
+
+  const errors = [
+    'durable object',
+    'internal error',
+    'durable object storage operation exceeded timeout which caused object to be reset.',
+    'cannot access storage because object has moved to a different machine',
+    'network connection lost.',
+    'cannot resolve durable object due to transient issue on remote node.',
+    'durable object reset because its code was updated.',
+    'the durable object\'s code has been updated, this version can no longer access storage.'
+  ];
+  
+  return errors.some(error => err.includes(error));
+}
+
 // takes the durable (e.g. env.Counter) and returns an object with { get(id) } to fetch the proxied stub
 export const proxyDurable = (durable, middlewareOptions = {}) => {
   if (!durable || !durable.idFromName) {
@@ -44,13 +65,26 @@ export const proxyDurable = (durable, middlewareOptions = {}) => {
           body: JSON.stringify(content)
         })
 
-        const stubFetch = (obj, type, prop, content) => {
-          const theFetch = obj.fetch(buildRequest(type, prop, content))
+        const stubFetch = (obj, type, prop, content,retries) => {
+          retries = retries || 0;
+          const builtRequest = buildRequest(type, prop, content);
+          let theFetch;
 
-          return options.parse
-          ? theFetch.then(transformResponse)
-          : theFetch
-        }
+            try{
+              theFetch = obj.fetch(builtRequest);
+            } catch (err) {
+              if (!shouldRetry(err, retries)) return Promise.reject(err);
+              // Retry up to 11 times over 30 seconds with exponential backoff. 20ms, 40ms, etc
+    
+              return new Promise(resolve => setTimeout(resolve, 2**retries * 10)).then(() => {
+                return stubFetch(obj, type, prop, content, retries + 1);
+              });
+            }
+
+            return options.parse
+            ? theFetch.then(transformResponse)
+            : theFetch;
+        } 
 
         return new Proxy(stub, {
           get: (obj, prop) => isValidMethod(prop)
