@@ -50,12 +50,13 @@ export const proxyDurable = (durable, middlewareOptions = {}) => {
         if (!id) id = durable.newUniqueId()
 
         if (typeof id === 'string') {
+          headers['itty-durable-idFromName'] = id
+          
           const existingId = /^[0-9a-fA-F]{64}$/
           if (existingId.test(id)) {
             id = durable.idFromString(id)
           } else {
             headers['do-name'] = id
-            headers['itty-durable-idFromName'] = id
             id = durable.idFromName(id)
           }
         }
