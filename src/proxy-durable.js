@@ -44,7 +44,7 @@ export const proxyDurable = (durable, middlewareOptions = {}) => {
     get: (id, options = {}) => {
       options = { ...middlewareOptions, ...options }
 
-      const otherHeaders = {}
+      const headers = {}
 
       try {
         if (!id) id = durable.newUniqueId()
@@ -67,7 +67,7 @@ export const proxyDurable = (durable, middlewareOptions = {}) => {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
-            ...otherHeaders,
+            ...headers,
           },
           body: JSON.stringify(content)
         })
