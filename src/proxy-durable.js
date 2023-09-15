@@ -55,6 +55,7 @@ export const proxyDurable = (durable, middlewareOptions = {}) => {
             id = durable.idFromString(id)
           } else {
             headers['do-name'] = id
+            headers['itty-durable-idFromName'] = id
             id = durable.idFromName(id)
           }
         }
